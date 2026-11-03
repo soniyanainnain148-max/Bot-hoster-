@@ -24,25 +24,24 @@ logger = logging.getLogger(__name__)
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# ---------- Global Stats (website isse padhti hai) ----------
+# ---------- Global Stats ----------
 bot_stats = {
     "status": "Starting",
     "hosted_bots": 0,
     "total_uploads": 0,
     "last_upload": None,
-    "uploads": [],  # list of {name, size, user_id, username, time}
+    "uploads": [],
 }
 
-# ---------- Helper: Auth check ----------
+# ---------- Auth Check ----------
 def is_authorized(user_id: int) -> bool:
-    """ALLOWED_USER_IDS env var se check. Agar set nahi hai toh sabko allow."""
     allowed = os.environ.get("ALLOWED_USER_IDS", "").strip()
     if not allowed:
-        return True  # koi restriction nahi
+        return True
     ids = [x.strip() for x in allowed.split(",") if x.strip()]
     return str(user_id) in ids
 
-# ---------- /start ----------
+# ---------- Commands ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not is_authorized(user.id):
@@ -56,7 +55,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
     )
 
-# ---------- /status (optional, user ke liye) ----------
 async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not is_authorized(user.id):
@@ -69,7 +67,7 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
     )
 
-# ---------- File handler ----------
+# ---------- File Handler ----------
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
     user = msg.from_user
@@ -87,7 +85,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text("❌ Sirf `.py` ya `.zip` file bhejo bhai.")
         return
 
-    # Download
     try:
         tg_file = await document.get_file()
         save_path = os.path.join(UPLOAD_DIR, f"{user.id}_{filename}")
@@ -97,7 +94,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text(f"⚠️ File download fail: {e}")
         return
 
-    # Zip extract
     extracted_note = ""
     if filename.endswith(".zip"):
         try:
@@ -110,7 +106,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.reply_text(f"⚠️ Zip extract fail: {e}")
             return
 
-    # Update stats
     bot_stats["hosted_bots"] += 1
     bot_stats["total_uploads"] += 1
     bot_stats["last_upload"] = filename
@@ -121,7 +116,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "username": user.username or user.first_name or "unknown",
         "time": datetime.utcnow().isoformat(),
     })
-    # Sirf last 50 rakho memory mein
     bot_stats["uploads"] = bot_stats["uploads"][-50:]
 
     await msg.reply_text(
@@ -133,7 +127,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
     )
 
-# ---------- Application builder ----------
+# ---------- Application Builder ----------
 def get_bot_application(token: str) -> Application:
     application = Application.builder().token(token).build()
     application.add_handler(CommandHandler("start", start))
