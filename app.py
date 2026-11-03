@@ -16,7 +16,7 @@ def run_bot():
         return
 
     try:
-        # Naya event loop banayein taaki thread mein asyncio kaam kare
+        # Naya event loop banayein
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
@@ -24,8 +24,10 @@ def run_bot():
         bot_stats["status"] = "Running"
         print("✅ Bot running in background...")
         
-        # run_polling ko loop ke through start karein
-        loop.run_until_complete(bot_app.run_polling(drop_pending_updates=True))
+        # close_loop=False zaroori hai warna thread loop close karne ki koshish karega
+        loop.run_until_complete(
+            bot_app.run_polling(drop_pending_updates=True, close_loop=False)
+        )
         
     except Exception as e:
         print(f"❌ Bot crashed: {e}")
@@ -51,4 +53,5 @@ if __name__ == "__main__":
     t.start()
 
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    # use_reloader=False zaroori hai taaki bot do baar start na ho
+    app.run(host="0.0.0.0", port=port, use_reloader=False)
