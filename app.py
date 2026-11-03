@@ -15,7 +15,7 @@ def run_bot():
         return
 
     try:
-        # Thread ke andar naya event loop set karo
+        # Thread ke andar naya loop set karo
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
@@ -23,9 +23,12 @@ def run_bot():
         bot_stats["status"] = "Running"
         print("✅ Bot starting...")
 
-        # Seedha run_polling call karo - loop.run_until_complete MAT use karo
-        # close_loop=False add karo taaki loop close na ho
-        bot_app.run_polling(drop_pending_updates=True, close_loop=False)
+        # stop_signals=None zaroori hai — warna background thread mein RuntimeError aayega
+        bot_app.run_polling(
+            drop_pending_updates=True,
+            close_loop=False,
+            stop_signals=None
+        )
 
     except Exception as e:
         print(f"❌ Bot crashed: {type(e).__name__}: {e}")
