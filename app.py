@@ -11,24 +11,23 @@ app = Flask(__name__)
 def run_bot():
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
-        print("❌ TELEGRAM_BOT_TOKEN not set. Bot nahi chalega.")
+        print("❌ TELEGRAM_BOT_TOKEN not set.")
         bot_stats["status"] = "No Token"
         return
 
     try:
-        # Naya event loop banayein
+        # Thread ke andar naya event loop set karo
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         bot_app = get_bot_application(token)
         bot_stats["status"] = "Running"
-        print("✅ Bot running in background...")
-        
-        # close_loop=False zaroori hai warna thread loop close karne ki koshish karega
-        loop.run_until_complete(
-            bot_app.run_polling(drop_pending_updates=True, close_loop=False)
-        )
-        
+        print("✅ Bot starting...")
+
+        # run_polling() khud loop manage karta hai, isliye seedha call karo
+        # loop.run_until_complete() MAT use karo
+        bot_app.run_polling(drop_pending_updates=True)
+
     except Exception as e:
         print(f"❌ Bot crashed: {e}")
         bot_stats["status"] = "Crashed"
@@ -48,10 +47,9 @@ def health():
 
 # ---------- Main ----------
 if __name__ == "__main__":
-    # Bot ko background thread mein start karein
+    # Bot ko background thread mein start karo
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
 
     port = int(os.environ.get("PORT", 5000))
-    # use_reloader=False zaroori hai taaki bot do baar start na ho
     app.run(host="0.0.0.0", port=port, use_reloader=False)
