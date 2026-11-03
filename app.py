@@ -7,7 +7,6 @@ from bot_logic import get_bot_application, bot_stats
 
 app = Flask(__name__)
 
-# ---------- Bot Runner (FIXED) ----------
 def run_bot():
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
@@ -24,15 +23,14 @@ def run_bot():
         bot_stats["status"] = "Running"
         print("✅ Bot starting...")
 
-        # run_polling() khud loop manage karta hai, isliye seedha call karo
-        # loop.run_until_complete() MAT use karo
-        bot_app.run_polling(drop_pending_updates=True)
+        # Seedha run_polling call karo - loop.run_until_complete MAT use karo
+        # close_loop=False add karo taaki loop close na ho
+        bot_app.run_polling(drop_pending_updates=True, close_loop=False)
 
     except Exception as e:
-        print(f"❌ Bot crashed: {e}")
-        bot_stats["status"] = "Crashed"
+        print(f"❌ Bot crashed: {type(e).__name__}: {e}")
+        bot_stats["status"] = f"Crashed: {type(e).__name__}"
 
-# ---------- Flask Routes ----------
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html", status=bot_stats)
@@ -45,9 +43,7 @@ def api_status():
 def health():
     return "OK", 200
 
-# ---------- Main ----------
 if __name__ == "__main__":
-    # Bot ko background thread mein start karo
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
 
