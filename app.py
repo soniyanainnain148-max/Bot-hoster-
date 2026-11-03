@@ -7,7 +7,7 @@ from bot_logic import get_bot_application, bot_stats
 
 app = Flask(__name__)
 
-# ---------- Bot Runner ----------
+# ---------- Bot Runner (FIXED) ----------
 def run_bot():
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
@@ -16,12 +16,17 @@ def run_bot():
         return
 
     try:
-        bot_app = get_bot_application(token)
+        # Naya event loop banayein taaki thread mein asyncio kaam kare
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+
+        bot_app = get_bot_application(token)
         bot_stats["status"] = "Running"
         print("✅ Bot running in background...")
-        bot_app.run_polling(drop_pending_updates=True)
+        
+        # run_polling ko loop ke through start karein
+        loop.run_until_complete(bot_app.run_polling(drop_pending_updates=True))
+        
     except Exception as e:
         print(f"❌ Bot crashed: {e}")
         bot_stats["status"] = "Crashed"
@@ -41,6 +46,7 @@ def health():
 
 # ---------- Main ----------
 if __name__ == "__main__":
+    # Bot ko background thread mein start karein
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
 
