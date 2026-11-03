@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: my-bot-hoster
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: ALLOWED_USER_IDS
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.9
